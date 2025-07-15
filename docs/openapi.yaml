@@ -1,0 +1,145 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+tags:
+- name: Book API Rest Endpoints
+  description: Operations related to books
+paths:
+  /api/books/{id}:
+    get:
+      tags:
+      - Book API Rest Endpoints
+      summary: Get book by id
+      description: Retrieve a book by its id
+      operationId: getBook
+      parameters:
+      - name: id
+        in: path
+        description: Id of the book to retrieve
+        required: true
+        schema:
+          minimum: 1
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Book"
+    put:
+      tags:
+      - Book API Rest Endpoints
+      summary: Update book
+      description: Update the book identified by id
+      operationId: updateBook
+      parameters:
+      - name: id
+        in: path
+        description: Id of the book to update
+        required: true
+        schema:
+          minimum: 1
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookRequest"
+        required: true
+      responses:
+        "204":
+          description: No Content
+    delete:
+      tags:
+      - Book API Rest Endpoints
+      summary: Delete book
+      description: Delete book identified by id
+      operationId: deleteBook
+      parameters:
+      - name: id
+        in: path
+        description: Id of the book to delete
+        required: true
+        schema:
+          minimum: 1
+          type: integer
+          format: int32
+      responses:
+        "204":
+          description: No Content
+  /api/books:
+    get:
+      tags:
+      - Book API Rest Endpoints
+      summary: Get book by title
+      description: Retrieve a list of books based on title
+      operationId: getBookByTitle
+      parameters:
+      - name: title
+        in: query
+        description: Optional. Title of the book to retrieve
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+    post:
+      tags:
+      - Book API Rest Endpoints
+      summary: Create book
+      description: Create new book based on request body
+      operationId: createBook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+components:
+  schemas:
+    BookRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        genre:
+          type: string
+        rating:
+          maximum: 5
+          minimum: 1
+          type: integer
+          format: int32
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        author:
+          type: string
+        genre:
+          type: string
+        rating:
+          type: integer
+          format: int32
