@@ -2,15 +2,15 @@ package com.example.bookstore.controller;
 
 import com.example.bookstore.DTO.request.BookRequest;
 import com.example.bookstore.entity.Book;
+import com.example.bookstore.exception.BookNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import org.springdoc.api.OpenApiResourceNotFoundException;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import com.google.common.base.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +26,7 @@ public class BookController {
         books = new ArrayList<Book>();
         books.add(new Book((long) 1, "SOIF", "George RR Martin", "Fantasy", (short) 5));
         books.add(new Book((long) 2, "Harry Potter", "J.K. Rowling", "Fantasy", (short) 5));
+        books.add(new Book((long) 3, "The Hobbit", "J.R.R. Tolkien", "Fantasy", (short) 4));
     }
 
     @Operation(summary = "Get book by id", description = "Retrieve a book by its id")
@@ -33,7 +34,7 @@ public class BookController {
     @GetMapping("/{id}")
     public Book getBook(@Parameter(description = "Id of the book to retrieve") @PathVariable @Min(value=1) long id) {
 
-        return books.stream().filter(book -> book.getId() == id).findFirst().orElseThrow(() -> new OpenApiResourceNotFoundException("Book not found"));
+        return books.stream().filter(book -> book.getId() == id).findFirst().orElseThrow(() -> new BookNotFoundException("Book Not Found with id:" + id));
 
     }
 
@@ -42,7 +43,7 @@ public class BookController {
     @GetMapping()
     public List<Book> getBookByTitle(@Parameter(description = "Optional. Title of the book to retrieve") @RequestParam(required = false) String title) {
 
-        if (title == null || title.isEmpty()) {
+        if (!Strings.isNullOrEmpty(title)) {
            return books;
         }
 
@@ -71,19 +72,25 @@ public class BookController {
     @Operation(summary = "Update book", description = "Update the book identified by id")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/{id}")
-    public void updateBook(@Parameter(description = "Id of the book to update") @PathVariable @Min(value=1) short id, @Valid @RequestBody BookRequest bookRequest) {
+    public Book updateBook(@Parameter(description = "Id of the book to update") @PathVariable @Min(value=1) short id, @Valid @RequestBody BookRequest bookRequest) {
         for (int i=0; i < books.size(); i++) {
             if (books.get(i).getId() == id) {
-                books.set(i, convertToBook(id, bookRequest));
+                Book newBook = convertToBook(id, bookRequest);
+                books.set(i, newBook);
+                return newBook;
             }
         }
+
+        throw new BookNotFoundException("Book not found with id: " + id);
     }
 
     @Operation(summary = "Delete book", description = "Delete book identified by id")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     public void deleteBook(@Parameter(description = "Id of the book to delete") @PathVariable @Min(value=1) short id) {
-        books.removeIf(book -> book.getId() == id);
+
+        boolean removed = books.removeIf(book -> book.getId() == id);
+        if (!removed) throw new BookNotFoundException("Book not found with id: " + id);
     }
 
     private Book convertToBook(long id, BookRequest bookRequest) {
